@@ -1,6 +1,7 @@
 from django.shortcuts import render
-from django.http import HttpResponse, JsonResponse
-from .models import Question
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
+from django.urls import reverse
+from .models import Question, Choice
 import datetime
 
 # Create your views here.
@@ -17,8 +18,37 @@ def index(request):
 
 
 def detail(request, question_id):
-    print(question_id)
     question = Question.objects.filter(id=question_id)
     if not question:
         return JsonResponse({},status=404)
     return render(request, 'polls/detail.html', {'question': question})
+
+
+def vote(request, question_id):
+    question = Question.objects.filter(id=question_id)
+    if not question:
+        return JsonResponse({},status=404)
+    
+    choice = request.data.get('choice')
+    if not choice:
+        return JsonResponse({}, status=400)
+
+    selected = question.choice_set.get(pk=choice)
+    if not selected:
+        return render(request, 'polls/detail.html', {
+            'question': question,
+            'error_message': "Choice Error",
+        })
+
+    selected.votes += 1
+    selected.save()
+    
+    return HttpResponseRedirect(reverse('polls:results', args=(question.id)))
+
+
+def results(request, question_id):
+    question = Question.objects.filter(id=question_id)
+    if not question:
+        return JsonResponse({},status=404)
+    
+    return render(request, 'polls/results.html', {'question':question})

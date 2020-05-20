@@ -18,18 +18,19 @@ def index(request):
 
 
 def detail(request, question_id):
-    question = Question.objects.filter(id=question_id)
+    question = Question.objects.filter(id=question_id).first()
+    print(question)
     if not question:
         return JsonResponse({},status=404)
     return render(request, 'polls/detail.html', {'question': question})
 
 
 def vote(request, question_id):
-    question = Question.objects.filter(id=question_id)
+    question = Question.objects.filter(id=question_id).first()
     if not question:
         return JsonResponse({},status=404)
     
-    choice = request.data.get('choice')
+    choice = request.POST['choice']
     if not choice:
         return JsonResponse({}, status=400)
 
@@ -43,11 +44,11 @@ def vote(request, question_id):
     selected.votes += 1
     selected.save()
     
-    return HttpResponseRedirect(reverse('polls:results', args=(question.id)))
+    return HttpResponseRedirect(reverse('polls:results', args=(question.id,)))
 
 
 def results(request, question_id):
-    question = Question.objects.filter(id=question_id)
+    question = Question.objects.filter(id=question_id).first()
     if not question:
         return JsonResponse({},status=404)
     
